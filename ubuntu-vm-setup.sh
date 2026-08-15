@@ -103,7 +103,6 @@ detect_environment() {
 # ── Dependency Installation ─────────────────────────────────────────────────
 install_deps() {
     log "Installing dependencies..."
-    local pkgs=()
 
     # Detect package manager
     if command -v apt-get &>/dev/null; then
@@ -121,50 +120,170 @@ install_deps() {
         warn "Unknown package manager — assuming deps are pre-installed"
     fi
 
-    # QEMU (try KVM-enabled first, fall back to TCG)
-    if ! command -v qemu-system-x86_64 &>/dev/null; then
-        pkgs+=(qemu-system-x86 qemu-img)
-        if [ "$PKG_MGR" = "apk" ]; then
-            # Alpine needs qemu-system-x86_64 separately
-            pkgs+=(qemu-system-x86_64 qemu-img)
-        fi
+    # Helper: try to find any qemu binary already on the system
+    find_existing_qemu() {
+        for bin in qemu-system-x86_64 qemu-system-x86_64-static qemu-system-x86_64.exe; do
+            if command -v "$bin" &>/dev/null; then
+                QEMU_BIN="$bin"
+                log "Found existing QEMU: $QEMU_BIN"
+                return 0
+            fi
+        done
+        # Search common paths
+        for path in /usr/bin /usr/local/bin /usr/sbin /opt/*/bin; do
+            if [ -x "${path}/qemu-system-x86_64" ]; then
+                QEMU_BIN="${path}/qemu-system-x86_64"
+                log "Found existing QEMU: $QEMU_BIN"
+                return 0
+            fi
+        done
+        return 1
+    }
+
+    # Helper: try to find qemu-img
+    find_existing_qemu_img() {
+        for bin in qemu-img qemu-img.exe; do
+            if command -v "$bin" &>/dev/null; then
+                QEMU_IMG="$bin"
+                return 0
+            fi
+        done
+        for path in /usr/bin /usr/local/bin /usr/sbin /opt/*/bin; do
+            if [ -x "${path}/qemu-img" ]; then
+                QEMU_IMG="${path}/qemu-img"
+                return 0
+            fi
+        done
+        return 1
+    }
+
+    # If QEMU already present, skip install
+    if find_existing_qemu && find_existing_qemu_img; then
+        log "QEMU already installed, skipping package installation"
+        log "QEMU: $($QEMU_BIN --version 2>/dev/null | head -1)"
+        return 0
     fi
 
-    # Supporting tools
-    pkgs+=(wget curl socat cloud-utils genisoimage xorriso socat)
+    # ── Install QEMU via package manager ────────────────────────────────────
+    local install_success=false
 
     if [ "$PKG_MGR" = "apt" ]; then
-        sudo apt-get update -qq
-        sudo apt-get install -y -qq "${pkgs[@]}" qemu-utils cloud-image-utils xorriso socat 2>/dev/null || true
-    elif [ "$PKG_MGR" = "yum" ] || [ "$PKG_MGR" = "dnf" ]; then
-        sudo "$PKG_MGR" install -y -q qemu-system-x86 qemu-img wget curl socat genisoimage xorriso 2>/dev/null || true
-    elif [ "$PKG_MGR" = "apk" ]; then
-        sudo apk add --no-cache qemu-system-x86_64 qemu-img wget curl socat cdrtools xorriso 2>/dev/null || true
-    elif [ "$PKG_MGR" = "pacman" ]; then
-        sudo pacman -Sy --noconfirm qemu-full wget curl socat cdrtools xorriso 2>/dev/null || true
-    fi
+        log "Enabling repos and updating..."
+        # Enable universe/multiverse if available
+        sudo add-apt-repository -y universe 2>/dev/null || true
+        sudo add-apt-repository -y multiverse 2>/dev/null || true
+        sudo apt-get update -qq 2>&1 | tail -3
 
-    # Verify QEMU installed
-    if ! command -v qemu-system-x86_64 &>/dev/null; then
-        err "Failed to install QEMU. Trying alternative: qemu-system-x86_64"
-        if command -v qemu-system-x86_64 &>/dev/null; then
-            QEMU_BIN="qemu-system-x86_64"
-        else
-            err "Cannot find any QEMU binary. Exiting."
-            exit 1
+        # Try multiple package name variations
+        local qemu_pkgs=("qemu-system-x86" "qemu-system-x86-64" "qemu-system" "qemu")
+        local qemu_img_pkgs=("qemu-utils" "qemu-img" "qemu-system-x86")
+
+        for qp in "${qemu_pkgs[@]}"; do
+            if apt-cache show "$qp" &>/dev/null; then
+                log "Installing $qp..."
+                sudo apt-get install -y "$qp" 2>&1 | tail -5
+                if command -v qemu-system-x86_64 &>/dev/null; then
+                    install_success=true
+                    break
+                fi
+            fi
+        done
+
+        # Install qemu-img separately if needed
+        if ! find_existing_qemu_img 2>/dev/null; then
+            for qip in "${qemu_img_pkgs[@]}"; do
+                if apt-cache show "$qip" &>/dev/null; then
+                    sudo apt-get install -y "$qip" 2>&1 | tail -3
+                    break
+                fi
+            done
         fi
-    else
-        QEMU_BIN="qemu-system-x86_64"
+
+        # Supporting tools
+        sudo apt-get install -y wget curl socat genisoimage xorriso cloud-utils 2>&1 | tail -3 || true
+
+    elif [ "$PKG_MGR" = "yum" ] || [ "$PKG_MGR" = "dnf" ]; then
+        # Enable EPEL for QEMU
+        sudo "$PKG_MGR" install -y epel-release 2>/dev/null || true
+        sudo "$PKG_MGR" install -y qemu-system-x86 qemu-img wget curl socat genisoimage xorriso 2>&1 | tail -5
+
+    elif [ "$PKG_MGR" = "apk" ]; then
+        sudo apk update
+        sudo apk add --no-cache qemu-system-x86_64 qemu-img wget curl socat cdrtools xorriso 2>&1 | tail -5
+
+    elif [ "$PKG_MGR" = "pacman" ]; then
+        sudo pacman -Sy --noconfirm qemu-full wget curl socat cdrtools xorriso 2>&1 | tail -5
     fi
 
-    # Verify qemu-img
-    if ! command -v qemu-img &>/dev/null && ! command -v qemu-img.exe &>/dev/null; then
-        err "qemu-img not found"
+    # ── Fallback: download static QEMU binary ───────────────────────────────
+    if ! find_existing_qemu 2>/dev/null; then
+        warn "Package manager install failed — downloading static QEMU binary..."
+        download_static_qemu
+    fi
+
+    # Final verification
+    if ! find_existing_qemu 2>/dev/null; then
+        err "Cannot install or find QEMU. Dumping available packages for debugging:"
+        if [ "$PKG_MGR" = "apt" ]; then
+            apt-cache search qemu 2>/dev/null | head -20
+        fi
+        err "Exiting. Install QEMU manually and retry."
         exit 1
     fi
-    QEMU_IMG="qemu-img"
+
+    if ! find_existing_qemu_img 2>/dev/null; then
+        err "qemu-img not found. Install qemu-utils/qemu-img package."
+        exit 1
+    fi
 
     log "QEMU: $($QEMU_BIN --version 2>/dev/null | head -1)"
+}
+
+# ── Static QEMU Download (fallback) ────────────────────────────────────────
+download_static_qemu() {
+    local arch
+    arch=$(uname -m)
+    local tmpdir="/tmp/qemu-static"
+    mkdir -p "$tmpdir"
+
+    case "$arch" in
+        x86_64)
+            # Try multiple sources for static QEMU
+            local urls=(
+                "https://github.com/multiarch/qemu-user-static/releases/latest/download/qemu-x86_64-static"
+                "https://github.com/multiarch/qemu-user-static/releases/latest/download/x86_64_qemu-x86_64_static.tar.gz"
+            )
+            for url in "${urls[@]}"; do
+                log "Trying: $url"
+                if curl -sL "$url" -o "$tmpdir/qemu-download" 2>/dev/null; then
+                    # Check if it's a tarball or binary
+                    file "$tmpdir/qemu-download" 2>/dev/null | grep -q "gzip\|tar" && {
+                        tar xzf "$tmpdir/qemu-download" -C "$tmpdir" 2>/dev/null
+                        find "$tmpdir" -name "qemu-x86_64*" -type f -exec chmod +x {} \;
+                    } || chmod +x "$tmpdir/qemu-download"
+
+                    # Find the binary
+                    local qemu_bin
+                    qemu_bin=$(find "$tmpdir" -name "qemu-x86_64*" -type f -executable 2>/dev/null | head -1)
+                    if [ -n "$qemu_bin" ]; then
+                        local dest="/usr/local/bin/qemu-system-x86_64"
+                        sudo cp "$qemu_bin" "$dest" 2>/dev/null && {
+                            sudo chmod +x "$dest"
+                            QEMU_BIN="$dest"
+                            log "Static QEMU installed: $dest"
+                            return 0
+                        }
+                    fi
+                fi
+            done
+            ;;
+        aarch64|arm64)
+            log "ARM64 detected — QEMU x86_64 TCG will work via multiarch"
+            ;;
+    esac
+
+    rm -rf "$tmpdir"
+    return 1
 }
 
 # ── Hypervisor Selection ────────────────────────────────────────────────────
