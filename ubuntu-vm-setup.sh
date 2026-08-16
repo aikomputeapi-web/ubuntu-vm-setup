@@ -43,7 +43,8 @@ prompt_config() {
     local host_ram_mb host_cpus host_disk_gb
     host_ram_mb=$(free -m 2>/dev/null | awk '/^Mem:/{print $2}' || echo "2048")
     host_cpus=$(nproc 2>/dev/null || echo "2")
-    host_disk_gb=$(df -BG / 2>/dev/null | awk 'NR==2{print $4}' || echo "10")
+    host_disk_gb=$(df -B1 / 2>/dev/null | awk 'NR==2{print int($4/1073741824)}' || echo "10")
+    [ -z "$host_disk_gb" ] || [ "$host_disk_gb" -eq 0 ] 2>/dev/null && host_disk_gb=10
 
     # Calculate safe defaults (50% RAM, 50% CPUs, 60% free disk)
     local safe_ram=$(( host_ram_mb / 2 ))
@@ -210,7 +211,8 @@ detect_environment() {
     # Check available resources
     TOTAL_RAM_MB=$(free -m 2>/dev/null | awk '/^Mem:/{print $2}' || echo "2048")
     TOTAL_CPUS=$(nproc 2>/dev/null || echo "2")
-    FREE_DISK_GB=$(df -BG / 2>/dev/null | awk 'NR==2{gsub(/G/,"",$4); print $4}' || echo "10")
+    FREE_DISK_GB=$(df -B1 / 2>/dev/null | awk 'NR==2{print int($4/1073741824)}' || echo "10")
+    [ -z "$FREE_DISK_GB" ] || [ "$FREE_DISK_GB" -eq 0 ] 2>/dev/null && FREE_DISK_GB=10
 
     info "Environment: $ENV_TYPE"
     info "KVM available: $HAS_KVM"
