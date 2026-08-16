@@ -50,7 +50,7 @@ prompt_config() {
     local safe_cpus=$(( host_cpus / 2 ))
     [ "$safe_cpus" -lt 1 ] && safe_cpus=1
     local safe_disk=$(( host_disk_gb * 60 / 100 ))
-    [ "$safe_disk" -lt 20 ] && safe_disk=20
+    [ "$safe_disk" -lt 5 ] && safe_disk=5
 
     # Skip prompts if env vars already set
     if [ -n "${VM_CPUS_SET:-}" ] || [ -n "${VM_RAM_SET:-}" ] || [ -n "${VM_DISK_SIZE_SET:-}" ]; then
@@ -98,9 +98,9 @@ prompt_config() {
     # ── Disk ────────────────────────────────────────────────────────────────
     echo -e "${YELLOW}Disk Space${NC}"
     echo "  Recommended: ${safe_disk}GB (60% of host ${host_disk_gb}GB free)"
-    echo "  Range: 20-${host_disk_gb}GB"
+    echo "  Range: 5-${host_disk_gb}GB"
     read -rp "  Disk in GB [${VM_DISK_SIZE}]: " input
-    if [ -n "$input" ] && [ "$input" -ge 20 ] 2>/dev/null && [ "$input" -le "$host_disk_gb" ] 2>/dev/null; then
+    if [ -n "$input" ] && [ "$input" -ge 5 ] 2>/dev/null && [ "$input" -le "$host_disk_gb" ] 2>/dev/null; then
         VM_DISK_SIZE="$input"
     elif [ -n "$input" ]; then
         warn "Invalid input, using default: ${VM_DISK_SIZE}"
