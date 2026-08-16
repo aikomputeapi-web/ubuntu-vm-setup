@@ -90,14 +90,22 @@ do_public_ssh() {
     fi
     local url
     url=$(get_tunnel_url)
+    [ -z "$url" ] && url=$(cat "$VM_DISK_DIR/${VM_NAME}-tunnel-url.txt" 2>/dev/null)
     if [ -z "$url" ]; then
         err "Could not find tunnel URL. Check: tail -f $VM_DISK_DIR/${VM_NAME}-tunnel.log"
         exit 1
     fi
     local host="${url#https://}"
-    info "Connecting via public tunnel..."
+    if ! command -v cloudflared &>/dev/null; then
+        err "cloudflared not installed on THIS machine. Install it first:"
+        err "  https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/"
+        exit 1
+    fi
+    info "Connecting via public tunnel (cloudflared ProxyCommand)..."
     info "ssh ${VM_USER}@${host}"
-    ssh -o StrictHostKeyChecking=no "${VM_USER}@${host}"
+    ssh -o StrictHostKeyChecking=no \
+        -o ProxyCommand="cloudflared access ssh --hostname %h" \
+        "${VM_USER}@${host}"
 }
 
 do_restart() {

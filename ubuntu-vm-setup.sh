@@ -682,42 +682,99 @@ setup_public_tunnel() {
         log "cloudflared installed"
     fi
 
-    # Start SSH tunnel (quick tunnel — no account needed)
-    log "Starting public SSH tunnel (Cloudflare Quick Tunnel)..."
+    # ── Tunnel mode ──────────────────────────────────────────────────────────
+    # 1. If CLOUDFLARE_TUNNEL_TOKEN is set -> Named Tunnel (persistent, your domain)
+    # 2. Otherwise -> Quick Tunnel (free, random *.trycloudflare.com URL)
     local tunnel_log="$VM_DISK_DIR/${VM_NAME}-tunnel.log"
+    TUNNEL_MODE="quick"
 
-    # Create tunnel wrapper that restarts on failure
-    cat > "$VM_DISK_DIR/tunnel.sh" <<TUNNEL
+    if [ -n "$TUNNEL_TOKEN" ]; then
+        TUNNEL_MODE="named"
+        log "Using NAMED tunnel (token provided) — persistent, your own domain"
+        cat > "$VM_DISK_DIR/tunnel.sh" <<TUNNEL
 #!/usr/bin/env bash
-# Auto-restarting SSH tunnel wrapper
+# Auto-restarting named Cloudflare tunnel
+# Public hostname is configured in CF Zero Trust dashboard:
+#   Networks -> Tunnels -> your tunnel -> Public Hostname
+#   Map e.g. ssh.yourdomain.com -> ssh://localhost:${VM_HOST_FWD}
 while true; do
-    echo "[$(date)] Starting tunnel..."
-    cloudflared tunnel --url ssh://localhost:${VM_HOST_FWD} 2>&1 | tee -a "$tunnel_log"
-    echo "[$(date)] Tunnel crashed, restarting in 5s..."
+    echo "[\$(date)] Starting named tunnel..."
+    cloudflared tunnel run --token ${TUNNEL_TOKEN} 2>&1 | tee -a "$tunnel_log"
+    echo "[\$(date)] Tunnel exited, restarting in 5s..."
     sleep 5
 done
 TUNNEL
+    else
+        log "Using QUICK tunnel (no account) — URL is random and changes on restart"
+        log "For a permanent URL on your own domain, re-run with:"
+        log "  CLOUDFLARE_TUNNEL_TOKEN=<your-token> $0"
+        cat > "$VM_DISK_DIR/tunnel.sh" <<TUNNEL
+#!/usr/bin/env bash
+# Auto-restarting quick tunnel wrapper
+while true; do
+    echo "[\$(date)] Starting tunnel..."
+    cloudflared tunnel --url ssh://localhost:${VM_HOST_FWD} --no-autoupdate 2>&1 | tee -a "$tunnel_log"
+    echo "[\$(date)] Tunnel exited, restarting in 5s..."
+    sleep 5
+done
+TUNNEL
+    fi
+    echo "$TUNNEL_MODE" > "$VM_DISK_DIR/${VM_NAME}-tunnel-mode.txt"
     chmod +x "$VM_DISK_DIR/tunnel.sh"
 
     nohup "$VM_DISK_DIR/tunnel.sh" > "$tunnel_log" 2>&1 &
     TUNNEL_PID=$!
     echo "$TUNNEL_PID" > "$VM_DISK_DIR/${VM_NAME}-tunnel.pid"
-    log "Tunnel started (PID: $TUNNEL_PID)"
+    log "Tunnel started (PID: $TUNNEL_PID, mode: $TUNNEL_MODE)"
 
-    # Extract tunnel URL after a delay
-    sleep 5
-    local tunnel_url
-    tunnel_url=$(grep -oP 'https://[a-z0-9-]+\.trycloudflare\.com' "$tunnel_log" 2>/dev/null | head -1)
-    if [ -n "$tunnel_url" ]; then
-        log "╔══════════════════════════════════════════════════════════════╗"
-        log "║  PUBLIC SSH ACCESS:                                         ║"
-        log "║  ssh ${VM_USER}@${tunnel_url#https://}                      ║"
-        log "║  Password: ${VM_PASS}                                       ║"
-        log "╚══════════════════════════════════════════════════════════════╝"
-        echo "${tunnel_url#https://}" > "$VM_DISK_DIR/${VM_NAME}-tunnel-url.txt"
+    # Extract tunnel URL after a delay (quick mode only)
+    if [ "$TUNNEL_MODE" = "quick" ]; then
+        sleep 8
+        local tunnel_url
+        tunnel_url=$(grep -oP 'https://[a-z0-9-]+\.trycloudflare\.com' "$tunnel_log" 2>/dev/null | tail -1)
+        if [ -n "$tunnel_url" ]; then
+            local t_host="${tunnel_url#https://}"
+            echo "$t_host" > "$VM_DISK_DIR/${VM_NAME}-tunnel-url.txt"
+            echo ""
+            log "═══════════════════════════════════════════════════════════════"
+            log "  PUBLIC SSH ACCESS (Cloudflare Quick Tunnel)"
+            log "═══════════════════════════════════════════════════════════════"
+            warn "  The URL is RANDOM and changes every tunnel restart."
+            warn "  New URL after restart: cat $VM_DISK_DIR/${VM_NAME}-tunnel-url.txt"
+            echo ""
+            info "  IMPORTANT — Cloudflare proxies HTTP, not raw TCP."
+            info "  Your client machine needs cloudflared installed:"
+            info "    https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/"
+            echo ""
+            info "  Then connect from ANY machine with:"
+            info "    ssh -o ProxyCommand=\"cloudflared access ssh --hostname %h\" ${VM_USER}@${t_host}"
+            echo ""
+            info "  Or add this to ~/.ssh/config on your client:"
+            info "    Host *.trycloudflare.com"
+            info "      ProxyCommand cloudflared access ssh --hostname %h"
+            info "  ...then simply: ssh ${VM_USER}@${t_host}"
+            echo ""
+            info "  Password: $VM_PASS  (or SSH key: ${SSH_KEY}.pub already installed)"
+            log "═══════════════════════════════════════════════════════════════"
+        else
+            warn "Tunnel URL not yet available. Check: $tunnel_log"
+            warn "Or run: grep 'trycloudflare' $tunnel_log"
+        fi
     else
-        warn "Tunnel URL not yet available. Check: $tunnel_log"
-        warn "Or run: grep 'trycloudflare' $tunnel_log"
+        echo ""
+        log "═══════════════════════════════════════════════════════════════"
+        log "  PUBLIC SSH ACCESS (Named Tunnel — your domain)"
+        log "═══════════════════════════════════════════════════════════════"
+        info "  1. Go to Cloudflare Zero Trust dashboard:"
+        info "     https://one.dash.cloudflare.com/ -> Networks -> Tunnels"
+        info "  2. Find this tunnel -> Public Hostname -> Add one:"
+        info "     subdomain.yourdomain.com -> ssh://localhost:${VM_HOST_FWD}"
+        info "  3. From any machine (with cloudflared installed):"
+        info "     ssh ${VM_USER}@subdomain.yourdomain.com"
+        info "     (needs 'ProxyCommand cloudflared access ssh --hostname %h')"
+        echo ""
+        info "  The hostname NEVER changes — it's tied to your CF account."
+        log "═══════════════════════════════════════════════════════════════"
     fi
 }
 
@@ -942,8 +999,10 @@ print_status() {
     fi
 
     if [ -n "$tunnel_url" ]; then
-        info "PUBLIC SSH (via Cloudflare Tunnel):"
-        info "  ssh ${VM_USER}@${tunnel_url}"
+        info "PUBLIC SSH (via Cloudflare Quick Tunnel):"
+        info "  NOTE: URL changes on restart — current: $tunnel_url"
+        info "  Client needs cloudflared + ProxyCommand:"
+        info "    ssh -o ProxyCommand=\"cloudflared access ssh --hostname %h\" ${VM_USER}@${tunnel_url}"
         info "  Password: $VM_PASS"
         echo ""
     fi
