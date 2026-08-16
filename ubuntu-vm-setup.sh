@@ -37,6 +37,123 @@ VM_PASS="${VM_PASS:-ubuntu}"
 SSH_KEY="${SSH_KEY:-$HOME/.ssh/id_ed25519}"
 TUNNEL_TOKEN="${CLOUDFLARE_TUNNEL_TOKEN:-}"  # Optional: for persistent tunnels
 
+# ── Interactive Config Prompt ────────────────────────────────────────────────
+prompt_config() {
+    # Detect host resources for recommendations
+    local host_ram_mb host_cpus host_disk_gb
+    host_ram_mb=$(free -m 2>/dev/null | awk '/^Mem:/{print $2}' || echo "2048")
+    host_cpus=$(nproc 2>/dev/null || echo "2")
+    host_disk_gb=$(df -BG / 2>/dev/null | awk 'NR==2{print $4}' || echo "10")
+
+    # Calculate safe defaults (50% RAM, 50% CPUs, 60% free disk)
+    local safe_ram=$(( host_ram_mb / 2 ))
+    local safe_cpus=$(( host_cpus / 2 ))
+    [ "$safe_cpus" -lt 1 ] && safe_cpus=1
+    local safe_disk=$(( host_disk_gb * 60 / 100 ))
+    [ "$safe_disk" -lt 20 ] && safe_disk=20
+
+    # Skip prompts if env vars already set
+    if [ -n "${VM_CPUS_SET:-}" ] || [ -n "${VM_RAM_SET:-}" ] || [ -n "${VM_DISK_SIZE_SET:-}" ]; then
+        return 0
+    fi
+
+    # Skip if piped / non-interactive
+    if [ ! -t 0 ] || [ ! -t 1 ]; then
+        info "Non-interactive mode — using defaults (CPUs=$VM_CPUS, RAM=${VM_RAM}MB, Disk=${VM_DISK_SIZE}GB)"
+        return 0
+    fi
+
+    echo ""
+    echo -e "${CYAN}╔══════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║                   VM Configuration                          ║${NC}"
+    echo -e "${CYAN}╚══════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+    info "Host system: ${host_cpus} CPUs | ${host_ram_mb}MB RAM | ${host_disk_gb}GB free disk"
+    echo ""
+
+    # ── CPUs ────────────────────────────────────────────────────────────────
+    echo -e "${YELLOW}CPU Cores${NC}"
+    echo "  Recommended: ${safe_cpus} (50% of host ${host_cpus})"
+    echo "  Range: 1-${host_cpus}"
+    read -rp "  CPUs [${VM_CPUS}]: " input
+    if [ -n "$input" ] && [ "$input" -ge 1 ] 2>/dev/null && [ "$input" -le "$host_cpus" ] 2>/dev/null; then
+        VM_CPUS="$input"
+    elif [ -n "$input" ]; then
+        warn "Invalid input, using default: ${VM_CPUS}"
+    fi
+    echo ""
+
+    # ── RAM ─────────────────────────────────────────────────────────────────
+    echo -e "${YELLOW}Memory (RAM)${NC}"
+    echo "  Recommended: ${safe_ram}MB (50% of host ${host_ram_mb}MB)"
+    echo "  Range: 512-${host_ram_mb}MB"
+    read -rp "  RAM in MB [${VM_RAM}]: " input
+    if [ -n "$input" ] && [ "$input" -ge 512 ] 2>/dev/null && [ "$input" -le "$host_ram_mb" ] 2>/dev/null; then
+        VM_RAM="$input"
+    elif [ -n "$input" ]; then
+        warn "Invalid input, using default: ${VM_RAM}"
+    fi
+    echo ""
+
+    # ── Disk ────────────────────────────────────────────────────────────────
+    echo -e "${YELLOW}Disk Space${NC}"
+    echo "  Recommended: ${safe_disk}GB (60% of host ${host_disk_gb}GB free)"
+    echo "  Range: 20-${host_disk_gb}GB"
+    read -rp "  Disk in GB [${VM_DISK_SIZE}]: " input
+    if [ -n "$input" ] && [ "$input" -ge 20 ] 2>/dev/null && [ "$input" -le "$host_disk_gb" ] 2>/dev/null; then
+        VM_DISK_SIZE="$input"
+    elif [ -n "$input" ]; then
+        warn "Invalid input, using default: ${VM_DISK_SIZE}"
+    fi
+    echo ""
+
+    # ── Username ────────────────────────────────────────────────────────────
+    echo -e "${YELLOW}VM Username${NC}"
+    read -rp "  Username [${VM_USER}]: " input
+    if [ -n "$input" ]; then
+        VM_USER="$input"
+    fi
+    echo ""
+
+    # ── Password ────────────────────────────────────────────────────────────
+    echo -e "${YELLOW}VM Password${NC}"
+    read -rsp "  Password [${VM_PASS}]: " input
+    echo ""
+    if [ -n "$input" ]; then
+        VM_PASS="$input"
+    fi
+    echo ""
+
+    # ── SSH Port ────────────────────────────────────────────────────────────
+    echo -e "${YELLOW}SSH Port Forward${NC}"
+    echo "  Host port that forwards to VM port 22"
+    read -rp "  Host SSH port [${VM_HOST_FWD}]: " input
+    if [ -n "$input" ] && [ "$input" -ge 1 ] 2>/dev/null && [ "$input" -le 65535 ] 2>/dev/null; then
+        VM_HOST_FWD="$input"
+    elif [ -n "$input" ]; then
+        warn "Invalid input, using default: ${VM_HOST_FWD}"
+    fi
+    echo ""
+
+    # ── Summary ─────────────────────────────────────────────────────────────
+    echo -e "${GREEN}╔══════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${GREEN}║  Configuration Summary                                      ║${NC}"
+    echo -e "${GREEN}╠══════════════════════════════════════════════════════════════╣${NC}"
+    echo -e "${GREEN}║  CPUs:   ${VM_CPUS} cores                                          ║${NC}"
+    echo -e "${GREEN}║  RAM:    ${VM_RAM} MB                                           ║${NC}"
+    echo -e "${GREEN}║  Disk:   ${VM_DISK_SIZE} GB                                          ║${NC}"
+    echo -e "${GREEN}║  User:   ${VM_USER}                                            ║${NC}"
+    echo -e "${GREEN}║  SSH:    localhost:${VM_HOST_FWD} -> VM:22                       ║${NC}"
+    echo -e "${GREEN}╚══════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+    read -rp "  Proceed with these settings? [Y/n]: " confirm
+    if [[ "${confirm,,}" == "n" || "${confirm,,}" == "no" ]]; then
+        info "Aborted. Re-run without piping or set env vars."
+        exit 0
+    fi
+    echo ""
+}
+
 # ── Colors ──────────────────────────────────────────────────────────────────
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
 BLUE='\033[0;34m'; CYAN='\033[0;36m'; NC='\033[0m'
@@ -864,6 +981,7 @@ cleanup() {
 # ── Main ─────────────────────────────────────────────────────────────────────
 main() {
     banner
+    prompt_config
     detect_environment
     install_deps
     select_hypervisor
@@ -885,7 +1003,21 @@ while [ $# -gt 0 ]; do
         --help|-h)
             echo "Usage: $0 [options]"
             echo ""
-            echo "Environment variables:"
+            echo "Interactive prompts:"
+            echo "  (no flags)          Prompt for CPU, RAM, disk, user, password"
+            echo ""
+            echo "Quick mode (skip prompts):"
+            echo "  --quick             Use defaults without prompting"
+            echo ""
+            echo "Override individual values:"
+            echo "  --cpus N            Number of CPU cores"
+            echo "  --ram N             RAM in MB"
+            echo "  --disk N            Disk size in GB"
+            echo "  --user NAME         VM username"
+            echo "  --pass PASS         VM password"
+            echo "  --port N            Host SSH port (default: 8022)"
+            echo ""
+            echo "Environment variables (override everything):"
             echo "  VM_NAME             VM name (default: ubuntu-vm)"
             echo "  VM_DISK_SIZE        Disk size in GB (default: 50)"
             echo "  VM_RAM              RAM in MB (default: 4096)"
@@ -895,7 +1027,34 @@ while [ $# -gt 0 ]; do
             echo "  VM_PASS             Password (default: ubuntu)"
             echo "  SSH_KEY             SSH key path (default: ~/.ssh/id_ed25519)"
             echo "  CLOUDFLARE_TUNNEL_TOKEN  Token for persistent tunnel"
+            echo ""
+            echo "Management:"
+            echo "  --stop              Stop the running VM"
+            echo "  --status            Check VM status"
             exit 0
+            ;;
+        --quick|-q)
+            # Skip interactive prompt
+            export VM_CPUS_SET=1 VM_RAM_SET=1 VM_DISK_SIZE_SET=1
+            shift
+            ;;
+        --cpus)
+            VM_CPUS="$2"; export VM_CPUS_SET=1; shift 2
+            ;;
+        --ram)
+            VM_RAM="$2"; export VM_RAM_SET=1; shift 2
+            ;;
+        --disk)
+            VM_DISK_SIZE="$2"; export VM_DISK_SIZE_SET=1; shift 2
+            ;;
+        --user)
+            VM_USER="$2"; shift 2
+            ;;
+        --pass)
+            VM_PASS="$2"; shift 2
+            ;;
+        --port)
+            VM_HOST_FWD="$2"; shift 2
             ;;
         --stop)
             VM_NAME="${VM_NAME:-ubuntu-vm}"
