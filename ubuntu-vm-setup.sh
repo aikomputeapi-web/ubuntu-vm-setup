@@ -36,6 +36,7 @@ VM_USER="${VM_USER:-ubuntu}"
 VM_PASS="${VM_PASS:-ubuntu}"
 SSH_KEY="${SSH_KEY:-$HOME/.ssh/id_ed25519}"
 TUNNEL_TOKEN="${CLOUDFLARE_TUNNEL_TOKEN:-}"  # Optional: for persistent tunnels
+CF_HOSTNAME="${CF_HOSTNAME:-}"               # Optional: e.g. ssh.yourdomain.com for permanent named tunnel
 
 # ── Interactive Config Prompt ────────────────────────────────────────────────
 prompt_config() {
@@ -136,6 +137,21 @@ prompt_config() {
     fi
     echo ""
 
+    # ── Cloudflare domain (optional, permanent SSH URL) ────────────────────
+    echo -e "${YELLOW}Public SSH Access${NC}"
+    echo "  Quick tunnel (free, random URL that changes on restart) or"
+    echo "  your own Cloudflare domain (permanent URL, e.g. ssh.mydomain.com)"
+    read -rp "  Use your own Cloudflare domain? [y/N]: " use_cf || true
+    if [[ "${use_cf,,}" == "y" || "${use_cf,,}" == "yes" ]]; then
+        read -rp "  Hostname (e.g. ssh.mydomain.com): " cf_input || true
+        if [ -n "$cf_input" ]; then
+            CF_HOSTNAME="$cf_input"
+        else
+            warn "No hostname entered — using quick tunnel"
+        fi
+    fi
+    echo ""
+
     # ── Summary ─────────────────────────────────────────────────────────────
     echo -e "${GREEN}╔══════════════════════════════════════════════════════════════╗${NC}"
     echo -e "${GREEN}║  Configuration Summary                                      ║${NC}"
@@ -145,6 +161,11 @@ prompt_config() {
     echo -e "${GREEN}║  Disk:   ${VM_DISK_SIZE} GB                                          ║${NC}"
     echo -e "${GREEN}║  User:   ${VM_USER}                                            ║${NC}"
     echo -e "${GREEN}║  SSH:    localhost:${VM_HOST_FWD} -> VM:22                       ║${NC}"
+    if [ -n "$CF_HOSTNAME" ]; then
+        echo -e "${GREEN}║  Tunnel: ${CF_HOSTNAME} (permanent, your domain)       ║${NC}"
+    else
+        echo -e "${GREEN}║  Tunnel: quick (random trycloudflare.com URL)         ║${NC}"
+    fi
     echo -e "${GREEN}╚══════════════════════════════════════════════════════════════╝${NC}"
     echo ""
     read -rp "  Proceed with these settings? [Y/n]: " confirm
@@ -654,6 +675,117 @@ launch_vm() {
     warn "VM boot timeout — it may still be starting. Check: ssh -p $VM_HOST_FWD ${VM_USER}@localhost"
 }
 
+# ── Named Tunnel via cloudflared login (cert-based, own domain) ────────────
+# Fully automated: login URL -> create tunnel -> DNS route -> run.
+setup_cert_named_tunnel() {
+    local tunnel_log="$VM_DISK_DIR/${VM_NAME}-tunnel.log"
+    local cf_dir="$HOME/.cloudflared"
+    mkdir -p "$cf_dir"
+
+    # 1. Authenticate (cert.pem) — only needed once per machine
+    if [ ! -f "$cf_dir/cert.pem" ]; then
+        warn "cloudflared is not authenticated on THIS machine yet."
+        info "A URL will be printed below — open it in ANY browser (your local PC is fine),"
+        info "log into Cloudflare, and authorize the domain you want to use."
+        echo ""
+        if command -v timeout &>/dev/null; then
+            timeout 300 cloudflared tunnel login
+        else
+            cloudflared tunnel login
+        fi
+        if [ ! -f "$cf_dir/cert.pem" ]; then
+            err "Login not completed (no cert.pem found). Falling back to quick tunnel."
+            return 1
+        fi
+    fi
+    log "Cloudflare certificate found: $cf_dir/cert.pem"
+
+    # 2. Create or reuse tunnel
+    local tunnel_id=""
+    if [ -f "$VM_DISK_DIR/${VM_NAME}-cf-tunnel.id" ]; then
+        tunnel_id=$(cat "$VM_DISK_DIR/${VM_NAME}-cf-tunnel.id")
+    fi
+    if [ -z "$tunnel_id" ]; then
+        # Reuse existing tunnel with same name if present
+        tunnel_id=$(cloudflared tunnel list 2>/dev/null | awk -v n="$VM_NAME" '$2==n{print $1}' | head -1)
+    fi
+    if [ -z "$tunnel_id" ]; then
+        local create_out
+        create_out=$(cloudflared tunnel create "$VM_NAME" 2>&1)
+        echo "$create_out"
+        tunnel_id=$(echo "$create_out" | grep -oP '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1)
+    fi
+    if [ -z "$tunnel_id" ]; then
+        err "Failed to create/find tunnel. Falling back to quick tunnel."
+        return 1
+    fi
+    echo "$tunnel_id" > "$VM_DISK_DIR/${VM_NAME}-cf-tunnel.id"
+    log "Tunnel ready: $VM_NAME ($tunnel_id)"
+
+    local creds="$cf_dir/${tunnel_id}.json"
+    if [ ! -f "$creds" ]; then
+        err "Credentials file missing: $creds (was the tunnel created on another machine?)"
+        return 1
+    fi
+
+    # 3. Route DNS: hostname -> tunnel CNAME (idempotent)
+    cloudflared tunnel route dns "$tunnel_id" "$CF_HOSTNAME" 2>&1 | tail -2 || \
+        warn "DNS route command returned non-zero — record may already exist. Continuing."
+
+    # 4. Write config.yml
+    cat > "$cf_dir/config.yml" <<EOF
+tunnel: ${tunnel_id}
+credentials-file: ${creds}
+ingress:
+  - hostname: ${CF_HOSTNAME}
+    service: ssh://localhost:${VM_HOST_FWD}
+  - service: http_status:404
+EOF
+    log "Config written: $cf_dir/config.yml"
+    log "  ${CF_HOSTNAME} -> ssh://localhost:${VM_HOST_FWD}"
+
+    # 5. Auto-restart wrapper
+    cat > "$VM_DISK_DIR/tunnel.sh" <<TUNNEL
+#!/usr/bin/env bash
+# Auto-restarting named Cloudflare tunnel (own domain)
+while true; do
+    echo "[\$(date)] Starting named tunnel ${VM_NAME} (${CF_HOSTNAME})..."
+    cloudflared tunnel run ${tunnel_id} 2>&1 | tee -a "$tunnel_log"
+    echo "[\$(date)] Tunnel exited, restarting in 5s..."
+    sleep 5
+done
+TUNNEL
+    chmod +x "$VM_DISK_DIR/tunnel.sh"
+
+    nohup "$VM_DISK_DIR/tunnel.sh" > "$tunnel_log" 2>&1 &
+    echo $! > "$VM_DISK_DIR/${VM_NAME}-tunnel.pid"
+    echo "named-domain" > "$VM_DISK_DIR/${VM_NAME}-tunnel-mode.txt"
+    echo "$CF_HOSTNAME" > "$VM_DISK_DIR/${VM_NAME}-tunnel-url.txt"
+
+    sleep 5
+    if ! grep -q "Registered tunnel connection" "$tunnel_log" 2>/dev/null; then
+        warn "Tunnel connection not confirmed yet — check: tail -f $tunnel_log"
+    fi
+
+    echo ""
+    log "═══════════════════════════════════════════════════════════════"
+    log "  PUBLIC SSH — PERMANENT URL ON YOUR DOMAIN"
+    log "═══════════════════════════════════════════════════════════════"
+    info "  Hostname: ${CF_HOSTNAME} (never changes)"
+    info ""
+    info "  From your local PC (cloudflared already installed):"
+    info "    ssh -o ProxyCommand=\"cloudflared access ssh --hostname %h\" ${VM_USER}@${CF_HOSTNAME}"
+    info ""
+    info "  Or make it permanent in ~/.ssh/config:"
+    info "    Host ${CF_HOSTNAME}"
+    info "      ProxyCommand cloudflared access ssh --hostname %h"
+    info "  ...then just: ssh ${VM_USER}@${CF_HOSTNAME}"
+    echo ""
+    info "  Password: $VM_PASS  (or key: ${SSH_KEY}.pub)"
+    log "═══════════════════════════════════════════════════════════════"
+    return 0
+}
+
 # ── Public SSH Tunnel ───────────────────────────────────────────────────────
 setup_public_tunnel() {
     log "Setting up public SSH tunnel..."
@@ -683,10 +815,19 @@ setup_public_tunnel() {
     fi
 
     # ── Tunnel mode ──────────────────────────────────────────────────────────
-    # 1. If CLOUDFLARE_TUNNEL_TOKEN is set -> Named Tunnel (persistent, your domain)
-    # 2. Otherwise -> Quick Tunnel (free, random *.trycloudflare.com URL)
+    # 1. If CF_HOSTNAME is set -> Named Tunnel via cloudflared login (own domain, automated)
+    # 2. If CLOUDFLARE_TUNNEL_TOKEN is set -> Named Tunnel (token, dashboard-managed)
+    # 3. Otherwise -> Quick Tunnel (free, random *.trycloudflare.com URL)
     local tunnel_log="$VM_DISK_DIR/${VM_NAME}-tunnel.log"
     TUNNEL_MODE="quick"
+
+    if [ -n "$CF_HOSTNAME" ]; then
+        log "Named tunnel requested for: $CF_HOSTNAME"
+        if setup_cert_named_tunnel; then
+            return 0
+        fi
+        warn "Falling back to quick tunnel..."
+    fi
 
     if [ -n "$TUNNEL_TOKEN" ]; then
         TUNNEL_MODE="named"
@@ -997,13 +1138,22 @@ print_status() {
     if [ -f "$VM_DISK_DIR/${VM_NAME}-tunnel-url.txt" ]; then
         tunnel_url=$(cat "$VM_DISK_DIR/${VM_NAME}-tunnel-url.txt")
     fi
+    local tunnel_mode="quick"
+    [ -f "$VM_DISK_DIR/${VM_NAME}-tunnel-mode.txt" ] && tunnel_mode=$(cat "$VM_DISK_DIR/${VM_NAME}-tunnel-mode.txt")
 
     if [ -n "$tunnel_url" ]; then
-        info "PUBLIC SSH (via Cloudflare Quick Tunnel):"
-        info "  NOTE: URL changes on restart — current: $tunnel_url"
-        info "  Client needs cloudflared + ProxyCommand:"
-        info "    ssh -o ProxyCommand=\"cloudflared access ssh --hostname %h\" ${VM_USER}@${tunnel_url}"
-        info "  Password: $VM_PASS"
+        if [ "$tunnel_mode" = "named-domain" ]; then
+            info "PUBLIC SSH (permanent — your domain):"
+            info "  ssh -o ProxyCommand=\"cloudflared access ssh --hostname %h\" ${VM_USER}@${tunnel_url}"
+            info "  Or ~/.ssh/config: 'Host ${tunnel_url}' + 'ProxyCommand cloudflared access ssh --hostname %h'"
+            info "  Password: $VM_PASS"
+        else
+            info "PUBLIC SSH (via Cloudflare Quick Tunnel):"
+            info "  NOTE: URL changes on restart — current: $tunnel_url"
+            info "  Client needs cloudflared + ProxyCommand:"
+            info "    ssh -o ProxyCommand=\"cloudflared access ssh --hostname %h\" ${VM_USER}@${tunnel_url}"
+            info "  Password: $VM_PASS"
+        fi
         echo ""
     fi
 
@@ -1077,6 +1227,8 @@ while [ $# -gt 0 ]; do
             echo "  --user NAME         VM username"
             echo "  --pass PASS         VM password"
             echo "  --port N            Host SSH port (default: 8022)"
+            echo "  --cf-domain HOST    Permanent tunnel on your domain (e.g. ssh.mydomain.com)"
+            echo "                      (runs cloudflared login if needed — opens a URL to click)"
             echo ""
             echo "Environment variables (override everything):"
             echo "  VM_NAME             VM name (default: ubuntu-vm)"
@@ -1116,6 +1268,9 @@ while [ $# -gt 0 ]; do
             ;;
         --port)
             VM_HOST_FWD="$2"; shift 2
+            ;;
+        --cf-domain)
+            CF_HOSTNAME="$2"; shift 2
             ;;
         --stop)
             VM_NAME="${VM_NAME:-ubuntu-vm}"
