@@ -210,7 +210,7 @@ detect_environment() {
     # Check available resources
     TOTAL_RAM_MB=$(free -m 2>/dev/null | awk '/^Mem:/{print $2}' || echo "2048")
     TOTAL_CPUS=$(nproc 2>/dev/null || echo "2")
-    FREE_DISK_GB=$(df -BG / 2>/dev/null | awk 'NR==2{print $4}' || echo "10")
+    FREE_DISK_GB=$(df -BG / 2>/dev/null | awk 'NR==2{gsub(/G/,"",$4); print $4}' || echo "10")
 
     info "Environment: $ENV_TYPE"
     info "KVM available: $HAS_KVM"
