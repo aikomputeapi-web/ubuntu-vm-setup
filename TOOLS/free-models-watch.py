@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-free-models-watch.py — Watch free AI models across 4 coding-agent gateways.
+free-models-watch.py | Watch free AI models across 5 coding-agent gateways.
 
 Providers monitored:
   1. OpenRouter   GET https://openrouter.ai/api/v1/models    (public, no auth)
   2. OpenCode Zen GET https://opencode.ai/zen/v1/models      (public, no auth)
   3. Kilo         GET https://api.kilo.ai/api/gateway/models  (public, no auth)
   4. Cline        GET https://api.cline.bot/api/v1/models     (requires CLINE_API_KEY env var)
+  5. Ollama Cloud GET https://ollama.com/api/tags             (requires OLLAMA_CLOUD_API_KEY env var)
 
 Usage:
   python free-models-watch.py              # one-shot snapshot
@@ -17,6 +18,7 @@ Usage:
 
 Requires: requests (pip install requests)
 For Cline: set CLINE_API_KEY environment variable
+For Ollama: set OLLAMA_CLOUD_API_KEY environment variable
 For OpenRouter: optionally set OPENROUTER_API_KEY (increases rate limits)
 """
 
@@ -254,6 +256,39 @@ def fetch_cline():
     return free_models, None
 
 
+def fetch_ollama():
+    """
+    Ollama Cloud: uses https://ollama.com/api/tags with Bearer auth.
+    All cloud models are accessible on the Free plan (light usage),
+    so all returned models are listed.
+    Requires OLLAMA_CLOUD_API_KEY env var.
+    """
+    api_key = os.environ.get("OLLAMA_CLOUD_API_KEY", "")
+    if not api_key:
+        return (
+            [],
+            "Ollama: no OLLAMA_CLOUD_API_KEY set",
+        )
+
+    headers = {"Authorization": f"Bearer {api_key}"}
+    data, err = _safe_get("https://ollama.com/api/tags", headers=headers)
+    if err:
+        return [], f"Ollama: {err}"
+
+    # All cloud models are free-tier accessible
+    free_models = []
+    for m in data.get("models", []):
+        model_name = m.get("name", m.get("model", ""))
+        free_models.append({
+            "id": model_name,
+            "name": model_name,
+            "context_length": None,
+        })
+
+    free_models.sort(key=lambda x: x["name"].lower())
+    return free_models, None
+
+
 # ---------------------------------------------------------------------------
 # Provider registry
 # ---------------------------------------------------------------------------
@@ -263,6 +298,7 @@ PROVIDERS = {
     "opencode":     {"label": "OpenCode Zen", "fetch": fetch_opencode_zen, "color": MAGENTA},
     "kilo":         {"label": "Kilo",         "fetch": fetch_kilo,         "color": CYAN},
     "cline":        {"label": "Cline",        "fetch": fetch_cline,        "color": GREEN},
+    "ollama":       {"label": "Ollama Cloud", "fetch": fetch_ollama,       "color": YELLOW},
 }
 
 
@@ -397,7 +433,8 @@ Providers:
   openrouter   OpenRouter (https://openrouter.ai)
   opencode     OpenCode Zen (https://opencode.ai/zen)
   kilo         Kilo Gateway (https://api.kilo.ai)
-  cline        Cline API (https://cline.bot) — needs CLINE_API_KEY
+  cline        Cline API (https://cline.bot) | needs CLINE_API_KEY
+  ollama       Ollama Cloud (https://ollama.com) | needs OLLAMA_CLOUD_API_KEY
 
 Examples:
   %(prog)s                          # one-shot snapshot
@@ -408,8 +445,9 @@ Examples:
   %(prog)s --watch -p kilo cline    # watch only Kilo + Cline
 
 Environment:
-  CLINE_API_KEY       Optional. Cline API key for live model fetching.
-  OPENROUTER_API_KEY  Optional. OpenRouter key for higher rate limits.
+  CLINE_API_KEY         Optional. Cline API key for live model fetching.
+  OLLAMA_CLOUD_API_KEY  Optional. Ollama Cloud API key.
+  OPENROUTER_API_KEY    Optional. OpenRouter key for higher rate limits.
         """,
     )
     parser.add_argument(
