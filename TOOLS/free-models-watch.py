@@ -306,7 +306,7 @@ def print_snapshot(results, as_json=False):
         len(r["models"]) for r in results.values() if not r["error"]
     )
     print(f"\n{BOLD}{'='*70}{RESET}")
-    print(f"{BOLD}  Free AI Models Watch  {DIM}— {now}{RESET}")
+    print(f"{BOLD}  Free AI Models Watch  {DIM}| {now}{RESET}")
     print(f"{BOLD}{'='*70}{RESET}")
     print(f"{DIM}  Total free models across all providers: {total}{RESET}")
     print(f"{BOLD}{'='*70}{RESET}")
@@ -372,7 +372,7 @@ def print_deltas(deltas, prev_total, new_total):
     if not deltas:
         return
     now = datetime.now(timezone.utc).strftime("%H:%M:%S UTC")
-    print(f"\n{YELLOW}{BOLD}⚡ CHANGES DETECTED {DIM}— {now}{RESET}")
+    print(f"\n{YELLOW}{BOLD}CHANGES DETECTED {DIM}| {now}{RESET}")
     for label, color, action, mid, name in deltas:
         if action == "added":
             arrow = f"{GREEN}+ added{RESET}"
