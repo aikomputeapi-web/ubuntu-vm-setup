@@ -89,6 +89,7 @@ def deep_validate_svgs():
         ("original", "02-svg-bundles/svg-bundles/original-designs"),
         ("themed", "02-svg-bundles/svg-bundles/themed-packs"),
         ("canva", "07-canva-templates/templates"),
+        ("custom", "11-custom-personalized/output"),
     ]
 
     total_ok = 0
@@ -475,6 +476,74 @@ def deep_validate_ideas_guide():
     return has_real_titles and has_price_data
 
 
+def deep_validate_custom_personalized():
+    """Verify custom-personalized generator outputs have real content."""
+    print("\n=== DEEP: Custom Personalized Products ===")
+    try:
+        import glob
+        out_dir = os.path.join(BASE, "11-custom-personalized", "output")
+        if not os.path.isdir(out_dir):
+            log_issue("custom", "warning", "Output directory not found")
+            return False
+
+        svgs = glob.glob(os.path.join(out_dir, "*.svg"))
+        mds = glob.glob(os.path.join(out_dir, "*.md"))
+
+        print(f"  SVGs: {len(svgs)}, Reports: {len(mds)}")
+
+        # Check each SVG has visible elements (not just empty wrapper)
+        empty_svgs = 0
+        no_text = 0
+        for svg_path in svgs:
+            try:
+                tree = ET.parse(svg_path)
+                root = tree.getroot()
+                # Count visible elements (path, circle, rect, ellipse, line, polygon, text)
+                visible = 0
+                has_text = False
+                for elem in root.iter():
+                    tag = elem.tag.split("}")[-1]  # Strip namespace
+                    if tag in ("path", "circle", "rect", "ellipse", "line", "polygon", "text", "tspan"):
+                        visible += 1
+                    if tag in ("text", "tspan"):
+                        has_text = True
+                if visible < 5:
+                    empty_svgs += 1
+                    log_issue("custom", "warning", f"{os.path.basename(svg_path)} has only {visible} visible elements")
+                if not has_text:
+                    no_text += 1
+            except Exception as e:
+                log_issue("custom", "warning", f"{os.path.basename(svg_path)}: parse error: {e}")
+                empty_svgs += 1
+
+        # Check reports have affirmations and prompts
+        reports_ok = 0
+        for md_path in mds:
+            content = open(md_path, "r", errors="ignore").read()
+            has_affirmation = "affirmation" in content.lower()
+            has_prompt = "prompt" in content.lower() or "reflection" in content.lower()
+            if has_affirmation and has_prompt:
+                reports_ok += 1
+
+        # Check that generators exist
+        gen_dir = os.path.join(BASE, "11-custom-personalized")
+        generators = [f for f in os.listdir(gen_dir) if f.endswith(".py") and f.startswith("generate_")]
+
+        print(f"  Empty SVGs: {empty_svgs}, SVGs without text: {no_text}")
+        print(f"  Reports with affirmations+prompts: {reports_ok}/{len(mds)}")
+        print(f"  Generators: {len(generators)}")
+
+        if empty_svgs > 0 or len(svgs) < 10:
+            log_issue("custom", "warning", f"Only {len(svgs)} SVGs, {empty_svgs} empty")
+        if len(generators) < 3:
+            log_issue("custom", "warning", f"Only {len(generators)} generators (expected 3)")
+
+        return empty_svgs == 0 and len(svgs) >= 10 and reports_ok == len(mds) and len(generators) >= 3
+    except Exception as e:
+        log_issue("custom", "fail", f"Error: {e}")
+        return False
+
+
 if __name__ == "__main__":
     print("=" * 60)
     print("DEEP CONTENT VALIDATION")
@@ -491,6 +560,7 @@ if __name__ == "__main__":
     results["video"] = deep_validate_video_scripts()
     results["guides"] = deep_validate_guides()
     results["ideas"] = deep_validate_ideas_guide()
+    results["custom"] = deep_validate_custom_personalized()
 
     print("\n" + "=" * 60)
     print("DEEP VALIDATION SUMMARY")
