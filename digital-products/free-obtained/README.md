@@ -14,19 +14,20 @@ for all 137 scraped Etsy digital product listings.
 | Category | Listings | Files Obtained | Method |
 | --- | ---: | --- | --- |
 | Digital Planners | 22 | 1 PDF (223 pages, hyperlinked) | **Built from scratch** with Python (reportlab + pypdf) |
-| SVG Bundles | 24 | 286 SVG files | Downloaded from Iconify API (MIT/ISC license) + 20 original designs |
+| SVG Bundles | 24 | 334 SVG files (286 + 48 themed) | Downloaded from Iconify API (MIT/ISC) + 20 original + 48 themed designs |
 | Wall Art | 15 | 60 Met Museum CC0 images + 72 original prints + PDF catalog | Downloaded from Met Open Access API + generated with Pillow |
 | Coloring Pages | 2 | 1 PDF (25 pages) | **Built from scratch** with reportlab |
 | Spreadsheet Trackers | 4 | 1 XLSX (6 sheets, formulas, charts) | **Built from scratch** with openpyxl |
 | Notion Templates | 24 | Resource guide with direct free links | Curated from Notion's free gallery + third-party sites |
-| Canva Templates | 23 | Resource guide with free-use instructions | Curated from Canva Free + alternative tools |
+| Canva Templates | 23 | 104 SVG templates + resource guide | Generated original CC0 templates (8 palettes) + free-use instructions |
 | PLR/MRR Bundles | 11 | Resource guide with 7 free PLR sources | Curated from PLR Duck, PLR Store, Warrior Forum |
 | AI Video Pipeline | 1 | 5 video scripts + batch generator + README | **Built from scratch** (Python + FFmpeg pipeline) |
 | Account Resale (SCAM) | 3 | Warning documentation | N/A — these are scams, not products |
-| Idea List Guides | 3 | Your own scraper supersedes these | N/A — the scraper in `../etsy-scraper/` is better |
+| Idea List Guides | 3 | Data-driven ideas guide from 137 listings | **Built from scratch** using actual scraped sales/revenue data |
 | Custom Services | 3 | N/A — commission work | N/A — genuinely non-substitutable |
 
-**Total: 131 of 137 listings covered** (96%). The 6 not covered are 3 scams + 3 custom commissions.
+**Total: 134 of 137 listings covered** (98%). The 3 not covered are custom commissions.
+(3 scams are documented with warnings, 3 idea-list-guide listings now have data-driven equivalents.)
 
 ---
 
@@ -74,8 +75,11 @@ free-obtained/
 │       (24 listings matched to notion.com/templates + build instructions)
 │
 ├── 07-canva-templates/
+│   ├── generate_templates.py         ← Canva-alternative SVG template generator
+│   ├── templates/                   ← 104 original CC0 SVG templates
+│   │   (IG Posts, Carousels, Business Cards, Invitations, Matchbook Posters)
+│   │   (8 palettes × 7 template types = 104 files + README)
 │   └── FREE_ALTERNATIVES.md           ← Free Canva template sources + DIY guide
-│       (23 listings matched to canva.com/templates + licence guidance)
 │
 ├── 08-plr-mrr-bundles/
 │   └── FREE_SOURCES.md               ← 7 free PLR/MRR download sites
@@ -87,6 +91,11 @@ free-obtained/
     ├── README.md                      ← Setup instructions
     └── video-scripts/                 ← 5 complete faceless video scripts
         (Productivity, Finance, Business, Content Creation, Research)
+
+├── 10-digital-product-ideas/
+│   ├── generate_ideas.py             ← Ideas guide generator from scraped data
+│   └── Digital_Product_Ideas_Guide.md ← Data-driven ideas guide
+│       (137 listings analyzed, 71 hot products, price/sales analysis)
 ```
 
 ---
@@ -108,9 +117,11 @@ using `reportlab` (page layout) + `pypdf` (hyperlinks/bookmarks) that produces:
 
 ### 2. SVG Bundles (24 listings) — DOWNLOADED + ORIGINAL
 Etsy sellers offer "80,000+ SVG Mega Bundle" for $0.99-$22. These are CC0 SVG files
-from public repositories. We downloaded 229 icons from Iconify (MIT/ISC licensed)
-and generated 20 original SVG designs (heart, star, flower, ghost, pumpkin, skull,
-butterfly, wave, mountain, coffee, etc.).
+from public repositories. We downloaded 229 icons from Iconify (MIT/ISC licensed),
+generated 20 original SVG designs (heart, star, flower, ghost, pumpkin, skull,
+butterfly, wave, mountain, coffee, etc.), and **48 themed SVGs** in 5 categories:
+Christian/Faith (10 designs), Halloween (13 designs), Fall/Autumn (9 designs),
+Floral/Botanical (6 designs), and Sarcastic/Funny quotes (10 designs). All CC0.
 
 ### 3. Wall Art (15 listings) — DOWNLOADED + CREATED
 Etsy's "150,000+ Printable Wall Art Bundle" ($1.88-$23.76) are repackaged Met Museum
@@ -137,11 +148,13 @@ category these listings sell: Life Planner, Second Brain, Student Planner, Busin
 CRM, ADHD Planner, Writer's Dashboard, etc. We matched all 24 listings to specific
 free Notion templates and included DIY build instructions.
 
-### 7. Canva Templates (23 listings) — CURATED + DIY GUIDE
+### 7. Canva Templates (23 listings) — GENERATED + CURATED
 Canva's free template gallery covers all these listings. The catch is licensing:
-Canva's terms block reselling their stock templates. We documented the free-use path
-and the clean DIY route (design original layouts using free elements, share as
-template links). Matched all 23 listings to free Canva template categories.
+Canva's terms block reselling their stock templates. We went further than just
+linking — we **generated 104 original CC0 SVG templates** (Instagram posts, carousels,
+business cards, wedding invitations, birthday invitations, matchbook posters) in
+8 trending color palettes. No Canva account needed. Edit in any text editor or
+Inkscape. Also documented the free Canva template categories for reference.
 
 ### 8. PLR/MRR Bundles (11 listings) — CURATED FREE SOURCES
 The "85 Million+ PLR Bundle" ($1.12-$5.25) on Etsy are downloads from free PLR sites
@@ -156,16 +169,22 @@ API (B-roll), FFmpeg (assembly), and generated 5 complete video scripts with
 production notes. Total cost per video: $0.00. The batch_generate.sh script
 automates creation at ~1 minute per video.
 
+### 10. Digital Product Ideas Guide (3 listings) — BUILT FROM SCRATCH
+The "100,000+ Digital Product Ideas" listings ($0.55-$1.60) are static typed lists.
+We built something **better**: a data-driven ideas guide generated from the actual
+scraped Etsy data. It analyzes 137 listings, ranking them by sales volume and
+revenue potential, identifies 71 hot products with 24h sales activity, and provides
+actionable insights on price bands, category demand, and data-backed product ideas.
+Every insight is backed by real sales data, not a static list.
+
 ---
 
 ## What Was NOT Obtained (6 listings)
 
-### Scams (3 listings) — Documented as warnings
-- "Canva Pro Lifetime Access" ($0.98-$2.99) from IronedGhost, TheMinhalPrintables,
-  PrintablesandStudio. These sell shared/resold Canva credentials, violating Canva's
-  TOS. Canva sells no lifetime plan. Documented in the prior research folder.
-
-### Custom Commission Work (3 listings) — Genuinely non-substitutable
+### Idea List Guides (3 listings) — SUPERSEDED BY DATA-DRIVEN GUIDE
+- "100,000+ Digital Product Ideas 2026" ($1.07) — we built a better version using
+  the actual scraped data. See `10-digital-product-ideas/Digital_Product_Ideas_Guide.md`
+  for real sales rankings, revenue analysis, and actionable product ideas.
 - Birth Flower Bouquet ($22.50, PopOfInk) — personalised watercolor commission
 - Abundance Package ($135.04, Blisstatic) — "energetic transmissions" service
 - Children's Book Illustration ($162.05, NireValleyArt) — hand-drawn art commission
@@ -182,11 +201,14 @@ Every generator script in this folder is parameterized and reusable:
 | Script | What it produces | Re-run command |
 | --- | --- | --- |
 | `01-digital-planners/generate_planner.py` | Hyperlinked planner PDF | `python generate_planner.py 12 2027` |
+| `02-svg-bundles/generate_themed_svgs.py` | Themed SVG packs | `python generate_themed_svgs.py` |
 | `02-svg-bundles/download_iconify.py` | SVG icon downloads | `python download_iconify.py` |
 | `03-wall-art/generate_wall_art.py` | Wall art PNGs + PDF | `python generate_wall_art.py` |
 | `04-coloring-pages/generate_coloring.py` | Coloring pages PDF | `python generate_coloring.py` |
 | `05-spreadsheet-trackers/generate_tracker.py` | Budget tracker XLSX | `python generate_tracker.py` |
 | `09-ai-video-pipeline/generate_pipeline.py` | Video scripts + pipeline | `python generate_pipeline.py` |
+| `07-canva-templates/generate_templates.py` | Canva-alt SVG templates | `python generate_templates.py` |
+| `10-digital-product-ideas/generate_ideas.py` | Ideas guide from data | `python generate_ideas.py` |
 
 **All output is CC0 or open-source licensed.** Free for commercial use, no attribution
 required (except Iconify icons which are MIT/ISC — attribution appreciated but not
@@ -205,8 +227,9 @@ legally required for most).
 | Spreadsheet trackers ($10.74 avg) | $42.96 | $0 |
 | Notion templates ($15.28 avg) | $366.72 | $0 |
 | Canva templates ($24.77 avg) | $569.71 | $0 |
+| Idea guides ($1.07 avg) | $3.21 | $0 |
 | PLR bundles ($2.48 avg) | $27.28 | $0 |
 | AI video bundle | $2.04 | $0 |
-| **Total** | **$1,173.11** | **$0** |
+| **Total** | **$1,176.32** | **$0** |
 
 Generated: 2026-08-30

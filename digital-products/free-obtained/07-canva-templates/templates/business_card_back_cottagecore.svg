@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1050" height="600" viewBox="0 0 1050 600">
+<rect width="1050" height="600" fill="#F5EDE0"/>
+<!-- Logo placeholder -->
+<rect x="425" y="200" width="200" height="200" fill="none" stroke="#A8C4A2" stroke-width="4" rx="16"/>
+<text x="525" y="310" text-anchor="middle" font-family="Georgia, serif" font-size="48" fill="#A8C4A2" font-weight="bold">LOGO</text>
+<rect x="0" y="0" width="12" height="600" fill="#DBC5A0"/>
+</svg>

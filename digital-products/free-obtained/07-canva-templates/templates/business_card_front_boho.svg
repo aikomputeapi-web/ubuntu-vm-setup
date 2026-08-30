@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1050" height="600" viewBox="0 0 1050 600">
+<defs><linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+<stop offset="0%" style="stop-color:#8B5E3C"/><stop offset="100%" style="stop-color:#5C3D2E"/></linearGradient></defs>
+<rect width="1050" height="600" fill="url(#bg)"/>
+<!-- Accent line -->
+<rect x="0" y="588" width="1050" height="12" fill="#C49B6C"/>
+<!-- Name -->
+<text x="525" y="220" text-anchor="middle" font-family="Georgia, serif" font-size="42" fill="white" font-weight="bold">YOUR NAME</text>
+<!-- Title -->
+<text x="525" y="270" text-anchor="middle" font-family="Helvetica" font-size="22" fill="#C49B6C">Your Title | Your Business</text>
+<!-- Contact -->
+<text x="525" y="380" text-anchor="middle" font-family="Helvetica" font-size="18" fill="white">your@email.com | (555) 123-4567</text>
+<text x="525" y="420" text-anchor="middle" font-family="Helvetica" font-size="18" fill="white">www.yourwebsite.com</text>
+</svg>

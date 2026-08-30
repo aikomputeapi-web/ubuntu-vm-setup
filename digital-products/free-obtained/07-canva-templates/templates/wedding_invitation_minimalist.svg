@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">
+<rect width="1080" height="1080" fill="#FAFAFA"/>
+<!-- Floral border (decorative) -->
+<rect x="50" y="50" width="980" height="980" fill="none" stroke="#999999" stroke-width="2" rx="15"/>
+<rect x="65" y="65" width="950" height="950" fill="none" stroke="#E5E5E5" stroke-width="1" rx="12"/>
+<!-- Top decoration -->
+<text x="540" y="200" text-anchor="middle" font-family="Helvetica" font-size="22" fill="#4A4A4A">TOGETHER WITH THEIR FAMILIES</text>
+<!-- Names -->
+<text x="540" y="340" text-anchor="middle" font-family="Georgia, serif" font-size="64" fill="#1A1A1A" font-weight="bold">Jane &amp; John</text>
+<!-- Divider -->
+<line x1="390" y1="400" x2="690" y2="400" stroke="#999999" stroke-width="2"/>
+<!-- Date -->
+<text x="540" y="480" text-anchor="middle" font-family="Helvetica" font-size="28" fill="#4A4A4A">SATURDAY, JUNE 14, 2026</text>
+<text x="540" y="530" text-anchor="middle" font-family="Helvetica" font-size="28" fill="#4A4A4A">AT FOUR O'CLOCK</text>
+<!-- Venue -->
+<text x="540" y="620" text-anchor="middle" font-family="Georgia, serif" font-size="32" fill="#1A1A1A">The Garden Venue</text>
+<text x="540" y="660" text-anchor="middle" font-family="Helvetica" font-size="24" fill="#4A4A4A">123 Garden Street, City, State</text>
+<!-- RSVP -->
+<rect x="420" y="760" width="240" height="50" fill="#999999" rx="25"/>
+<text x="540" y="793" text-anchor="middle" font-family="Helvetica" font-size="20" fill="white">RSVP by May 1st</text>
+<!-- Bottom -->
+<text x="540" y="920" text-anchor="middle" font-family="Georgia" font-size="36" fill="#999999">&amp;</text>
+<text x="540" y="980" text-anchor="middle" font-family="Helvetica" font-size="18" fill="#4A4A4A">Reception to follow</text>
+</svg>
