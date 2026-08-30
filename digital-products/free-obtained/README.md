@@ -193,18 +193,22 @@ Every insight is backed by real sales data, not a static list.
 
 ---
 
-## What Was NOT Obtained (6 listings)
+## Previously Missing — Now Covered (6 listings)
 
 ### Idea List Guides (3 listings) — SUPERSEDED BY DATA-DRIVEN GUIDE
 - "100,000+ Digital Product Ideas 2026" ($1.07) — we built a better version using
   the actual scraped data. See `10-digital-product-ideas/Digital_Product_Ideas_Guide.md`
   for real sales rankings, revenue analysis, and actionable product ideas.
-- Birth Flower Bouquet ($22.50, PopOfInk) — personalised watercolor commission
-- Abundance Package ($135.04, Blisstatic) — "energetic transmissions" service
-- Children's Book Illustration ($162.05, NireValleyArt) — hand-drawn art commission
 
-These are skilled labour services, not reproducible files. No free equivalent exists
-because you're paying for someone's time and artistic skill on your specific brief.
+### Custom Services (3 listings) — FREE GENERATORS BUILT
+These were originally commissioned art services (not reproducible files). We built
+free Python generators that produce similar-quality customizable products:
+- **Birth Flower Bouquet** ($22.50, PopOfInk) — `11-custom-personalized/generate_birth_flower.py`
+  generates personalized SVG bouquet prints with 12 birth month flowers
+- **Abundance Package** ($135.04, Blisstatic) — `11-custom-personalized/generate_abundance.py`
+  generates name-seeded mandala SVGs with personalized affirmation reports
+- **Children's Book Illustration** ($162.05, NireValleyArt) — `11-custom-personalized/generate_illustration.py`
+  generates 4 scene illustrations + 3 character templates in vintage storybook style
 
 ---
 
@@ -223,6 +227,9 @@ Every generator script in this folder is parameterized and reusable:
 | `09-ai-video-pipeline/generate_pipeline.py` | Video scripts + pipeline | `python generate_pipeline.py` |
 | `07-canva-templates/generate_templates.py` | Canva-alt SVG templates | `python generate_templates.py` |
 | `10-digital-product-ideas/generate_ideas.py` | Ideas guide from data | `python generate_ideas.py` |
+| `11-custom-personalized/generate_birth_flower.py` | Birth flower bouquet SVG | `python generate_birth_flower.py --names "Mom:3,Dad:7"` |
+| `11-custom-personalized/generate_abundance.py` | Abundance mandala + report | `python generate_abundance.py --name "Sarah" --intention prosperity` |
+| `11-custom-personalized/generate_illustration.py` | Children's book illustrations | `python generate_illustration.py --title "My Story" --scene forest` |
 
 **All output is CC0 or open-source licensed.** Free for commercial use, no attribution
 required (except Iconify icons which are MIT/ISC — attribution appreciated but not
@@ -244,6 +251,8 @@ legally required for most).
 | Idea guides ($1.07 avg) | $3.21 | $0 |
 | PLR bundles ($2.48 avg) | $27.28 | $0 |
 | AI video bundle | $2.04 | $0 |
-| **Total** | **$1,176.32** | **$0** |
+| Custom services ($106.53 avg) | $319.59 | $0 |
+| **Total** | **$1,495.91** | **$0** |
 
 Generated: 2026-08-30
+Coverage: 137/137 listings (100%)
