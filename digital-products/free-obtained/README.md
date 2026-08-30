@@ -14,7 +14,7 @@ for all 137 scraped Etsy digital product listings.
 | Category | Listings | Files Obtained | Method |
 | --- | ---: | --- | --- |
 | Digital Planners | 22 | 1 PDF (223 pages, hyperlinked) | **Built from scratch** with Python (reportlab + pypdf) |
-| SVG Bundles | 24 | 249 SVG files | Downloaded from Iconify API (MIT/ISC license) + 20 original designs |
+| SVG Bundles | 24 | 286 SVG files | Downloaded from Iconify API (MIT/ISC license) + 20 original designs |
 | Wall Art | 15 | 60 Met Museum CC0 images + 72 original prints + PDF catalog | Downloaded from Met Open Access API + generated with Pillow |
 | Coloring Pages | 2 | 1 PDF (25 pages) | **Built from scratch** with reportlab |
 | Spreadsheet Trackers | 4 | 1 XLSX (6 sheets, formulas, charts) | **Built from scratch** with openpyxl |
