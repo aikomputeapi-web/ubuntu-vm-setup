@@ -13,6 +13,7 @@ def validate_svgs():
         "02-svg-bundles/svg-bundles/original-designs", 
         "02-svg-bundles/svg-bundles/themed-packs",
         "07-canva-templates/templates",
+        "11-custom-personalized/output",
     ]
     invalid = []
     total = 0
@@ -191,17 +192,19 @@ def validate_readme():
     with open(p, "r", encoding="utf-8") as f:
         content = f.read()
     # Check coverage number
-    has_134 = "134 of 137" in content
-    has_98 = "98%" in content
+    has_137 = "137 of 137" in content
+    has_100 = "100%" in content
     has_canva_count = "104 SVG" in content or "104 original" in content
     has_themed = "48 themed" in content
     has_ideas = "10-digital-product-ideas" in content
-    print(f"  Coverage 134/137: {has_134}")
-    print(f"  Coverage 98%: {has_98}")
+    has_custom = "11-custom-personalized" in content
+    print(f"  Coverage 137/137: {has_137}")
+    print(f"  Coverage 100%: {has_100}")
     print(f"  Canva templates count mentioned: {has_canva_count}")
     print(f"  Themed SVGs mentioned: {has_themed}")
     print(f"  Ideas guide folder referenced: {has_ideas}")
-    return all([has_134, has_98, has_canva_count, has_themed, has_ideas])
+    print(f"  Custom products folder referenced: {has_custom}")
+    return all([has_137, has_100, has_canva_count, has_themed, has_ideas, has_custom])
 
 def count_all_files():
     """Count total generated files."""

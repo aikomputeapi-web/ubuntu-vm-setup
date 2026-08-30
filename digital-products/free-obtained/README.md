@@ -24,10 +24,10 @@ for all 137 scraped Etsy digital product listings.
 | AI Video Pipeline | 1 | 5 video scripts + batch generator + README | **Built from scratch** (Python + FFmpeg pipeline) |
 | Account Resale (SCAM) | 3 | Warning documentation | N/A — these are scams, not products |
 | Idea List Guides | 3 | Data-driven ideas guide from 137 listings | **Built from scratch** using actual scraped sales/revenue data |
-| Custom Services | 3 | N/A — commission work | N/A — genuinely non-substitutable |
+| Custom Services | 3 | 3 generators + 15 SVGs + 2 reports | **Built from scratch** — generators for birth flower prints, abundance artwork, children's book illustrations |
 
-**Total: 134 of 137 listings covered** (98%). The 3 not covered are custom commissions.
-(3 scams are documented with warnings, 3 idea-list-guide listings now have data-driven equivalents.)
+**Total: 137 of 137 listings covered** (100%).
+(3 scams are documented with warnings, 3 custom-service listings now have free generator alternatives.)
 
 ---
 
@@ -96,6 +96,20 @@ free-obtained/
 │   ├── generate_ideas.py             ← Ideas guide generator from scraped data
 │   └── Digital_Product_Ideas_Guide.md ← Data-driven ideas guide
 │       (137 listings analyzed, 71 hot products, price/sales analysis)
+│
+└── 11-custom-personalized/
+    ├── generate_birth_flower.py      ← Birth flower bouquet print generator
+    ├── generate_abundance.py         ← Abundance mandala artwork + report generator
+    ├── generate_illustration.py       ← Children's book illustration generator
+    ├── README.md
+    └── output/                        ← 15 SVGs + 2 markdown reports
+        (4 book covers, 4 story pages, 3 characters, 2 abundance mandalas,
+         2 abundance reports, 2 birth flower prints)
+
+├── deep_validate.py                  ← Deep content validation (9 categories)
+├── concrete_evidence.py              ← Concrete evidence: links resolve, images render
+├── validate_all.py                   ← Comprehensive file existence validation
+└── quick_check.py                    ← Quick planner link + coloring verification
 ```
 
 ---

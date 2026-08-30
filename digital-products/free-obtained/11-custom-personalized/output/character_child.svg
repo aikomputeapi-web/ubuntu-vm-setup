@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="500" viewBox="0 0 400 500">
+<rect width="400" height="500" fill="#FAF7F0"/>
+<rect x="170.0" y="205.0" width="60" height="80" rx="15" fill="#7B5EA7" stroke="#5C4B8A" stroke-width="2"/>
+<circle cx="200.0" cy="175.0" r="38" fill="#F5D4B0" stroke="#D4B490" stroke-width="2"/>
+<path d="M 165.0,165.0 Q 200.0,130.0 235.0,165.0 Q 225.0,150.0 200.0,145.0 Q 175.0,150.0 165.0,165.0" fill="#5C4B3A"/>
+<circle cx="188.0" cy="175.0" r="5" fill="#333333"/>
+<circle cx="212.0" cy="175.0" r="5" fill="#333333"/>
+<circle cx="190.0" cy="173.0" r="2" fill="#FFFFFF"/>
+<circle cx="214.0" cy="173.0" r="2" fill="#FFFFFF"/>
+<circle cx="182.0" cy="185.0" r="6" fill="#F0A0A0" opacity="0.5"/>
+<circle cx="218.0" cy="185.0" r="6" fill="#F0A0A0" opacity="0.5"/>
+<path d="M 192.0,187.0 Q 200.0,195.0 208.0,187.0" fill="none" stroke="#333333" stroke-width="2"/>
+<text x="200.0" y="470" text-anchor="middle" font-family="Georgia, serif" font-size="16" fill="#2C3E50">Child Character Template</text>
+</svg>

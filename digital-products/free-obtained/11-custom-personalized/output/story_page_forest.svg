@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000">
+<clipPath id="illus-clip-1">
+<rect x="0" y="0" width="800" height="650"/>
+</clipPath>
+<g clip-path="url(#illus-clip-1)">
+<rect width="800" height="650" fill="#D4E8D4"/>
+<circle cx="640.0" cy="130.0" r="40" fill="#F5E6A8" opacity="0.6"/>
+<circle cx="640.0" cy="130.0" r="30" fill="#F5E6A8" opacity="0.8"/>
+<path d="M 0,357.50000000000006 Q 200.0,227.49999999999997 400.0,325.0 T 800,292.5 L 800,650 L 0,650 Z" fill="#A8C8A0" opacity="0.5"/>
+<path d="M 0,403.0 Q 240.0,292.5 480.0,377.0 T 800,357.50000000000006 L 800,650 L 0,650 Z" fill="#8FB87F" opacity="0.6"/>
+<rect x="115.0" y="467.5" width="10" height="37" fill="#8B6F47" rx="2"/>
+<circle cx="117.0" cy="455.5" r="35" fill="#5C8A4C" opacity="0.6"/>
+<circle cx="115.0" cy="446.5" r="28" fill="#5C8A4C" opacity="0.75"/>
+<circle cx="121.0" cy="448.5" r="20" fill="#5C8A4C" opacity="0.9"/>
+<rect x="275.0" y="487.0" width="10" height="35" fill="#8B6F47" rx="2"/>
+<circle cx="283.0" cy="474.0" r="35" fill="#5C8A4C" opacity="0.6"/>
+<circle cx="275.0" cy="475.0" r="28" fill="#5C8A4C" opacity="0.75"/>
+<circle cx="278.0" cy="468.0" r="20" fill="#5C8A4C" opacity="0.9"/>
+<rect x="435.00000000000006" y="448.0" width="10" height="44" fill="#8B6F47" rx="2"/>
+<circle cx="437.00000000000006" cy="426.0" r="35" fill="#5C8A4C" opacity="0.6"/>
+<circle cx="445.00000000000006" cy="427.0" r="28" fill="#5C8A4C" opacity="0.75"/>
+<circle cx="443.00000000000006" cy="428.0" r="20" fill="#5C8A4C" opacity="0.9"/>
+<rect x="595.0" y="474.0" width="10" height="40" fill="#8B6F47" rx="2"/>
+<circle cx="602.0" cy="458.0" r="35" fill="#5C8A4C" opacity="0.6"/>
+<circle cx="603.0" cy="455.0" r="28" fill="#5C8A4C" opacity="0.75"/>
+<circle cx="603.0" cy="456.0" r="20" fill="#5C8A4C" opacity="0.9"/>
+<rect x="731.0" y="500.0" width="10" height="35" fill="#8B6F47" rx="2"/>
+<circle cx="738.0" cy="487.0" r="35" fill="#5C8A4C" opacity="0.6"/>
+<circle cx="735.0" cy="483.0" r="28" fill="#5C8A4C" opacity="0.75"/>
+<circle cx="741.0" cy="484.0" r="20" fill="#5C8A4C" opacity="0.9"/>
+<rect x="0" y="520.0" width="800" height="130.0" fill="#6B9C5B" opacity="0.7"/>
+<rect x="157.0" y="544.5" width="6" height="12" fill="#8B6F47" rx="2"/>
+<ellipse cx="160.0" cy="544.5" rx="12" ry="8" fill="#D45D5D" opacity="0.8"/>
+<circle cx="156.0" cy="542.5" r="2" fill="#FFFFFF" opacity="0.6"/>
+<circle cx="163.0" cy="544.5" r="1.5" fill="#FFFFFF" opacity="0.5"/>
+<rect x="397.0" y="564.0" width="6" height="12" fill="#8B6F47" rx="2"/>
+<ellipse cx="400.0" cy="564.0" rx="12" ry="8" fill="#D45D5D" opacity="0.8"/>
+<circle cx="396.0" cy="562.0" r="2" fill="#FFFFFF" opacity="0.6"/>
+<circle cx="403.0" cy="564.0" r="1.5" fill="#FFFFFF" opacity="0.5"/>
+<rect x="637.0" y="525.0" width="6" height="12" fill="#8B6F47" rx="2"/>
+<ellipse cx="640.0" cy="525.0" rx="12" ry="8" fill="#D45D5D" opacity="0.8"/>
+<circle cx="636.0" cy="523.0" r="2" fill="#FFFFFF" opacity="0.6"/>
+<circle cx="643.0" cy="525.0" r="1.5" fill="#FFFFFF" opacity="0.5"/>
+<circle cx="583" cy="443" r="2.3" fill="#FFEE88" opacity="0.4"/>
+<circle cx="129" cy="341" r="1.5" fill="#FFEE88" opacity="0.5"/>
+<circle cx="603" cy="236" r="1.3" fill="#FFEE88" opacity="0.4"/>
+<circle cx="206" cy="304" r="1.1" fill="#FFEE88" opacity="0.5"/>
+<circle cx="605" cy="433" r="1.8" fill="#FFEE88" opacity="0.4"/>
+<circle cx="480" cy="394" r="2.8" fill="#FFEE88" opacity="0.6"/>
+<circle cx="70" cy="389" r="2.0" fill="#FFEE88" opacity="0.8"/>
+<circle cx="355" cy="394" r="2.7" fill="#FFEE88" opacity="0.8"/>
+<circle cx="479" cy="307" r="2.0" fill="#FFEE88" opacity="0.4"/>
+<circle cx="547" cy="209" r="1.8" fill="#FFEE88" opacity="0.6"/>
+<circle cx="464" cy="279" r="2.7" fill="#FFEE88" opacity="0.8"/>
+<circle cx="687" cy="208" r="2.8" fill="#FFEE88" opacity="0.6"/>
+<circle cx="728" cy="208" r="1.2" fill="#FFEE88" opacity="0.5"/>
+<circle cx="522" cy="288" r="1.1" fill="#FFEE88" opacity="0.5"/>
+<circle cx="266" cy="427" r="1.7" fill="#FFEE88" opacity="0.7"/>
+</g>
+<line x1="40" y1="660" x2="760" y2="660" stroke="#D5CFC7" stroke-width="1"/>
+<circle cx="400.0" cy="660" r="3" fill="#D5CFC7"/>
+<text x="60" y="750" font-family="Georgia, serif" font-size="14" fill="#2C3E50">Once upon a time, in a land filled with wonder and magic, th</text>
+<text x="60" y="750" font-family="Georgia, serif" font-size="14" fill="#2C3E50">Once upon a time, in a land filled with wonder and</text>
+<text x="60" y="772" font-family="Georgia, serif" font-size="14" fill="#2C3E50">magic, there lived a small but brave little creature</text>
+<text x="60" y="794" font-family="Georgia, serif" font-size="14" fill="#2C3E50">who dreamed of adventure beyond the meadow.</text>
+<text x="400.0" y="980" text-anchor="middle" font-family="Georgia, serif" font-size="11" fill="#CCCCCC">- 1 -</text>
+</svg>
