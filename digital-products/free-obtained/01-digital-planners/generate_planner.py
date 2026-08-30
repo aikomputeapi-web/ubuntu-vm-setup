@@ -490,11 +490,24 @@ class PlannerGenerator:
         # Add internal link annotations on the index page
         # Split the index page into 4 clickable quadrants for navigation
         if len(writer.pages) > 0:
-            from pypdf.generic import (
-                DictionaryObject, NumberObject, NameObject,
-                ArrayObject, FloatObject
-            )
+            page0 = writer.pages[0]
+            page_w = float(page0.mediabox.width)
+            page_h = float(page0.mediabox.height)
             
+            def make_link_dict(rect, target_page_idx):
+                """Create a link annotation dict in pypdf's expected format.
+                pypdf's add_annotation resolves target_page_index to proper IndirectReference."""
+                return {
+                    "/Subtype": "/Link",
+                    "/Rect": rect,
+                    "/Dest": {
+                        "target_page_index": target_page_idx,
+                        "fit": "/XYZ",
+                        "fit_args": [0, page_h, 1.0],
+                    },
+                }
+            
+            # Index page: 4 quadrant navigation links
             positions = [
                 (0.0, 0.5, 0.5, 1.0),  # top-left -> months
                 (0.5, 0.5, 1.0, 1.0),  # top-right -> weekly
@@ -502,31 +515,13 @@ class PlannerGenerator:
                 (0.5, 0.0, 1.0, 0.5),  # bottom-right -> notes
             ]
             section_order = ["months", "weekly", "daily", "notes"]
-            page0 = writer.pages[0]
-            page_w = float(page0.mediabox.width)
-            page_h = float(page0.mediabox.height)
             
             for si, sk in enumerate(section_order):
                 if sk in self.page_map:
                     target_idx = self.page_map[sk]
                     x0, y0, x1, y1 = positions[si]
-                    
-                    # pypdf expects this dict format for link annotations
-                    link_annot = {
-                        "/Subtype": "/Link",
-                        "/Rect": [
-                            x0 * page_w,
-                            y0 * page_h,
-                            x1 * page_w,
-                            y1 * page_h,
-                        ],
-                        "/Dest": {
-                            "target_page_index": target_idx,
-                            "fit": "/XYZ",
-                            "fit_args": [0, page_h, 1.0],
-                        },
-                    }
-                    writer.add_annotation(page_number=0, annotation=link_annot)
+                    rect = [x0 * page_w, y0 * page_h, x1 * page_w, y1 * page_h]
+                    writer.add_annotation(page_number=0, annotation=make_link_dict(rect, target_idx))
             
             # Add tab navigation links to EVERY page (bottom tabs)
             # Tab positions match _draw_tab_navigation: 5 tabs at bottom
@@ -542,17 +537,7 @@ class PlannerGenerator:
                         target_idx = self.page_map[section]
                         tx0 = 40 + ti * tab_w
                         tx1 = tx0 + tab_w - 5
-                        
-                        tab_annot = {
-                            "/Subtype": "/Link",
-                            "/Rect": [tx0, tab_y0, tx1, tab_y1],
-                            "/Dest": {
-                                "target_page_index": target_idx,
-                                "fit": "/XYZ",
-                                "fit_args": [0, page_h, 1.0],
-                            },
-                        }
-                        writer.add_annotation(page_number=page_idx, annotation=tab_annot)
+                        writer.add_annotation(page_number=page_idx, annotation=make_link_dict([tx0, tab_y0, tx1, tab_y1], target_idx))
 
         
         # Add bookmarks
