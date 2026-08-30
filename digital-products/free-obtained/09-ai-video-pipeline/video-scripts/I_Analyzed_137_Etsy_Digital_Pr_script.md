@@ -36,8 +36,16 @@ The most lucrative category? Digital planners at 35 sales per day. Full breakdow
 # curl "https://www.pexels.com/videos/search/data/" 
 
 # 3. Combine with FFmpeg
-ffmpeg -i broll.mp4 -i voiceover.wav -i music.mp3 \
-  -filter_complex "[0:v]scale=1080:1920,setsar=1[v]" \
-  -map "[v]" -map 1:a -map 2:a -c:a aac -shortest \
+# Windows: use -vf drawtext with fontfile='C\:/Windows/Fonts/arial.ttf'
+# Linux/Mac: fontconfig handles fonts automatically (omit fontfile)
+ffmpeg -y \
+  -f lavfi -i "color=c=0x1a1a2e:s=1080x1920:d=30:r=30" \
+  -f lavfi -i "sine=frequency=440:duration=30" \
+  -i voiceover.wav \
+  -vf "drawtext=fontfile='C\:/Windows/Fonts/arial.ttf':text='I Analyzed 137 Etsy Digital Products — Here's What I Found':fontsize=48:fontcolor=white:x=(w-text_w)/2:y=(h-text_h)/2" \
+  -map 0:v -map 2:a -c:a aac -b:a 128k \
   -t 30 output.mp4
+
+# Note: On Linux/Mac, remove fontfile='...' from the drawtext filter
+# Note: Escape colons in text with \: and single quotes with \'
 ```
