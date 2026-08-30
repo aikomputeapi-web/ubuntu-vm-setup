@@ -333,7 +333,7 @@ for i, m in enumerate(months):
     ws6[f"E{row}"].number_format = "0.0%"
     ws6[f"E{row}"].border = BOX_BORDER
 
-# Add a chart
+# Add bar chart: Income vs Expenses by Month
 chart = BarChart()
 chart.type = "col"
 chart.title = "Income vs Expenses by Month"
@@ -346,6 +346,31 @@ chart.set_categories(cats)
 chart.width = 20
 chart.height = 10
 ws6.add_chart(chart, "G3")
+
+# Add line chart: Savings rate trend
+line_chart = LineChart()
+line_chart.title = "Savings Rate Trend"
+line_chart.y_axis.title = "Savings Rate (%)"
+line_chart.x_axis.title = "Month"
+savings_data = Reference(ws6, min_col=5, min_row=3, max_row=15)
+line_chart.add_data(savings_data, titles_from_data=True)
+line_chart.set_categories(cats)
+line_chart.width = 20
+line_chart.height = 10
+ws6.add_chart(line_chart, "G25")
+
+# Add pie chart: Expense categories on Dashboard
+pie_chart = PieChart()
+pie_chart.title = "Expense Breakdown by Category"
+# Reference expense categories and amounts from the Expenses sheet (ws3)
+# Use the Dashboard's category breakdown (ws) for the pie chart
+pie_cats = Reference(ws, min_col=2, min_row=16, max_row=23)
+pie_data = Reference(ws, min_col=3, min_row=15, max_row=23)
+pie_chart.add_data(pie_data, titles_from_data=True)
+pie_chart.set_categories(pie_cats)
+pie_chart.width = 15
+pie_chart.height = 10
+ws.add_chart(pie_chart, "E14")
 
 ws6.column_dimensions["A"].width = 10
 ws6.column_dimensions["B"].width = 15

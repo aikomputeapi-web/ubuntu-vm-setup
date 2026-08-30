@@ -258,27 +258,6 @@ def generate_matchbook_poster(palette_name):
     colors = PALETTES[palette_name]
     W, H = 1080, 1080
     
-    return f'''{svg_header(W, H)}
-<rect width="{W}" height="{H}" fill="{colors[0]}"/>
-<!-- Main frame -->
-<rect x="80" y="80" width="{W-160}" height="{H-160}" fill="none" stroke="{colors[3]}" stroke-width="4" rx="8"/>
-<!-- Photo slots (2x3 grid) -->
-'''
-    photo_w = 340
-    photo_h = 260
-    start_x = 100
-    start_y = 100
-    for row in range(3):
-        for col in range(2):
-            x = start_x + col * (photo_w + 20)
-            y = start_y + row * (photo_h + 20)
-            svg_text = f'''<rect x="{x}" y="{y}" width="{photo_w}" height="{photo_h}" fill="{colors[1]}" stroke="{colors[2]}" stroke-width="2" rx="4"/>
-<text x="{x+photo_w//2}" y="{y+photo_h//2}" text-anchor="middle" font-family="Helvetica" font-size="20" fill="{colors[3]}" opacity="0.5">PHOTO</text>
-'''
-            # Don't append directly, just add to svg variable later
-            pass
-    
-    # Simplify - create the SVG
     svg = f'''{svg_header(W, H)}
 <rect width="{W}" height="{H}" fill="{colors[0]}"/>
 <rect x="80" y="80" width="{W-160}" height="{H-160}" fill="none" stroke="{colors[3]}" stroke-width="4" rx="8"/>

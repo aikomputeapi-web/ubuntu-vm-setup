@@ -323,7 +323,7 @@ if __name__ == "__main__":
     random.seed(42)
     c = canvas.Canvas(PDF_OUTPUT, pagesize=letter)
     
-    NUM_PAGES = 25  # Generate 25 coloring pages
+    NUM_PAGES = 50  # Generate 50 coloring pages
     
     print(f"Generating {NUM_PAGES} coloring pages...")
     
@@ -335,19 +335,19 @@ if __name__ == "__main__":
         # Set drawing color to black lines
         c.setStrokeColor(black)
         
-        if page_num < 12:
-            # Geometric/abstract patterns
+        if page_num < 15:
+            # Geometric/abstract patterns (15 pages)
             draw_geometric_pattern(c, page_num)
-        elif page_num < 18:
-            # Flower patterns
+        elif page_num < 25:
+            # Flower patterns (10 pages)
             cols, rows = 2, 3
             for r in range(rows):
                 for col in range(cols):
                     cx = PAGE_W * (0.25 + col * 0.5)
                     cy = PAGE_H * (0.8 - r * 0.3)
                     draw_flower_pattern(c, cx, cy, 80)
-        elif page_num < 22:
-            # Animal outlines
+        elif page_num < 30:
+            # Animal outlines (5 pages)
             animals = ["cat", "butterfly"]
             for i, animal in enumerate(animals):
                 cx = PAGE_W * (0.3 + i * 0.4)
@@ -356,8 +356,21 @@ if __name__ == "__main__":
             # Add decorative border
             c.setLineWidth(1)
             c.roundRect(30, 30, PAGE_W - 60, PAGE_H - 60, 15, stroke=1, fill=0)
+        elif page_num < 40:
+            # Mandalas with varying complexity (10 pages)
+            layers = 3 + (page_num - 30) % 5  # 3-7 layers
+            draw_mandala(c, PAGE_W/2, PAGE_H/2, 220, layers=layers)
+            # Corner decorations
+            for cx, cy in [(50, 50), (PAGE_W-50, 50), (50, PAGE_H-50), (PAGE_W-50, PAGE_H-50)]:
+                draw_flower_pattern(c, cx, cy, 40)
+        elif page_num < 45:
+            # Full-page mandalas with different rotation (5 pages)
+            draw_mandala(c, PAGE_W/2, PAGE_H/2, 250, layers=8)
+            c.setLineWidth(0.5)
+            c.circle(PAGE_W/2, PAGE_H/2, 260, stroke=1, fill=0)
+            c.circle(PAGE_W/2, PAGE_H/2, 270, stroke=1, fill=0)
         else:
-            # Mixed: mandala + decorative elements
+            # Mixed: mandala + decorative elements (5 pages)
             draw_mandala(c, PAGE_W/2, PAGE_H/2, 220, layers=7)
             # Corner decorations
             for cx, cy in [(50, 50), (PAGE_W-50, 50), (50, PAGE_H-50), (PAGE_W-50, PAGE_H-50)]:

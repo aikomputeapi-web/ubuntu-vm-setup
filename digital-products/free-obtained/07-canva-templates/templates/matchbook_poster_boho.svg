@@ -1,5 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">
 <rect width="1080" height="1080" fill="#F5EBE0"/>
-<!-- Main frame -->
 <rect x="80" y="80" width="920" height="920" fill="none" stroke="#8B5E3C" stroke-width="4" rx="8"/>
-<!-- Photo slots (2x3 grid) -->
+<rect x="130" y="130" width="320" height="200" fill="#D4A574" stroke="#C49B6C" stroke-width="2" rx="4"/>
+<text x="290" y="230" text-anchor="middle" font-family="Helvetica" font-size="18" fill="#8B5E3C" opacity="0.5">PHOTO 1</text>
+<rect x="510" y="130" width="320" height="200" fill="#D4A574" stroke="#C49B6C" stroke-width="2" rx="4"/>
+<text x="670" y="230" text-anchor="middle" font-family="Helvetica" font-size="18" fill="#8B5E3C" opacity="0.5">PHOTO 2</text>
+<rect x="130" y="400" width="320" height="200" fill="#D4A574" stroke="#C49B6C" stroke-width="2" rx="4"/>
+<text x="290" y="500" text-anchor="middle" font-family="Helvetica" font-size="18" fill="#8B5E3C" opacity="0.5">PHOTO 3</text>
+<rect x="510" y="400" width="320" height="200" fill="#D4A574" stroke="#C49B6C" stroke-width="2" rx="4"/>
+<text x="670" y="500" text-anchor="middle" font-family="Helvetica" font-size="18" fill="#8B5E3C" opacity="0.5">PHOTO 4</text>
+<rect x="130" y="670" width="320" height="200" fill="#D4A574" stroke="#C49B6C" stroke-width="2" rx="4"/>
+<text x="290" y="770" text-anchor="middle" font-family="Helvetica" font-size="18" fill="#8B5E3C" opacity="0.5">PHOTO 5</text>
+<rect x="510" y="670" width="320" height="200" fill="#D4A574" stroke="#C49B6C" stroke-width="2" rx="4"/>
+<text x="670" y="770" text-anchor="middle" font-family="Helvetica" font-size="18" fill="#8B5E3C" opacity="0.5">PHOTO 6</text>
+<text x="540" y="960" text-anchor="middle" font-family="Georgia, serif" font-size="32" fill="#5C3D2E" font-weight="bold">OUR STORY</text>
+</svg>
