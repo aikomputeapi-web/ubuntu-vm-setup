@@ -527,6 +527,33 @@ class PlannerGenerator:
                         },
                     }
                     writer.add_annotation(page_number=0, annotation=link_annot)
+            
+            # Add tab navigation links to EVERY page (bottom tabs)
+            # Tab positions match _draw_tab_navigation: 5 tabs at bottom
+            tab_labels = ["index", "months", "weekly", "daily", "notes"]
+            # Tab y-coordinates match _draw_tab_navigation (y=20, height=28)
+            tab_y0 = 15  # Slightly wider hit area than visible
+            tab_y1 = 55
+            tab_w = (page_w - 80) / 5
+            
+            for page_idx in range(len(writer.pages)):
+                for ti, section in enumerate(tab_labels):
+                    if section in self.page_map:
+                        target_idx = self.page_map[section]
+                        tx0 = 40 + ti * tab_w
+                        tx1 = tx0 + tab_w - 5
+                        
+                        tab_annot = {
+                            "/Subtype": "/Link",
+                            "/Rect": [tx0, tab_y0, tx1, tab_y1],
+                            "/Dest": {
+                                "target_page_index": target_idx,
+                                "fit": "/XYZ",
+                                "fit_args": [0, page_h, 1.0],
+                            },
+                        }
+                        writer.add_annotation(page_number=page_idx, annotation=tab_annot)
+
         
         # Add bookmarks
         # Index
