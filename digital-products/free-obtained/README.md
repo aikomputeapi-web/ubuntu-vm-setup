@@ -16,8 +16,8 @@ for all 137 scraped Etsy digital product listings.
 | Digital Planners | 22 | 1 PDF (223 pages, hyperlinked) | **Built from scratch** with Python (reportlab + pypdf) |
 | SVG Bundles | 24 | 334 SVG files (286 + 48 themed) | Downloaded from Iconify API (MIT/ISC) + 20 original + 48 themed designs |
 | Wall Art | 15 | 60 Met Museum CC0 images + 72 original prints + PDF catalog | Downloaded from Met Open Access API + generated with Pillow |
-| Coloring Pages | 2 | 1 PDF (25 pages) | **Built from scratch** with reportlab |
-| Spreadsheet Trackers | 4 | 1 XLSX (6 sheets, formulas, charts) | **Built from scratch** with openpyxl |
+| Coloring Pages | 2 | 1 PDF (50 pages) | **Built from scratch** with reportlab |
+| Spreadsheet Trackers | 4 | 1 XLSX (6 sheets, 3 charts, formulas, conditional formatting) | **Built from scratch** with openpyxl |
 | Notion Templates | 24 | Resource guide with direct free links | Curated from Notion's free gallery + third-party sites |
 | Canva Templates | 23 | 104 SVG templates + resource guide | Generated original CC0 templates (8 palettes) + free-use instructions |
 | PLR/MRR Bundles | 11 | Resource guide with 7 free PLR sources | Curated from PLR Duck, PLR Store, Warrior Forum |
@@ -61,14 +61,14 @@ free-obtained/
 │
 ├── 04-coloring-pages/
 │   ├── generate_coloring.py           ← Coloring page generator
-│   └── Free_Coloring_Pages_Bundle.pdf ← 25-page coloring book
+│   └── Free_Coloring_Pages_Bundle.pdf ← 50-page coloring book
 │       (Mandala, Geometric, Floral, Animals, Zentangle, Abstract)
 │
 ├── 05-spreadsheet-trackers/
 │   ├── generate_tracker.py            ← Spreadsheet generator
 │   └── Ultimate_Budget_Tracker_Template.xlsx  ← 6-sheet tracker
 │       (Dashboard, Income, Expenses, Savings Goals, Settings, Monthly Summary)
-│       (Formulas, charts, conditional formatting, data validation)
+│       (Formulas, 3 charts, conditional formatting, data validation)
 │
 ├── 06-notion-templates/
 │   └── FREE_ALTERNATIVES.md           ← Direct links to free Notion templates
